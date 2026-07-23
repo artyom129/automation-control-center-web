@@ -1,0 +1,7 @@
+id,name,email,company,city,amount
+1, john smith ,john@example.com,alpha agency,new york,1200
+2,maria garcia,maria@example.com,beta studio,los angeles,850
+3,Alex Brown,wrong-email,gamma labs,chicago,300
+4,John Smith,john@example.com,Alpha Agency,New York,1200
+5,Sarah Connor,sarah@example.com,delta tech,austin,1500
+6,David Lee,david@example.com,omega web,seattle,640

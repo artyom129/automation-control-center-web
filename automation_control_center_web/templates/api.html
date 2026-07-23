@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">API</p>
+        <h1>{{ t.api_title }}</h1>
+        <p>{{ t.api_text }}</p>
+    </div>
+</section>
+
+<section class="panel">
+    <form method="post">
+        <button class="button" type="submit">{{ t.run_api }}</button>
+    </form>
+</section>
+
+{% include "partials/messages.html" %}
+
+{% if stats %}
+    {% include "partials/stats.html" %}
+{% endif %}
+
+{% if downloads %}
+    {% include "partials/downloads.html" %}
+{% endif %}
+
+{% if table %}
+<section class="panel">
+    <h2>{{ t.results }}</h2>
+    <div class="table-wrap">{{ table | safe }}</div>
+</section>
+{% endif %}
+{% endblock %}

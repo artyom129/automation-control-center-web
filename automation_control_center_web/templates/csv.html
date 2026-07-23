@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">CSV</p>
+        <h1>{{ t.csv_title }}</h1>
+        <p>{{ t.csv_text }}</p>
+    </div>
+</section>
+
+<section class="panel">
+    <form method="post" enctype="multipart/form-data" class="form-grid">
+        <div class="field">
+            <label>{{ t.choose_file }}</label>
+            <input type="file" name="csv_file" accept=".csv">
+        </div>
+        <div class="form-actions">
+            <button class="button" type="submit" name="action" value="upload">{{ t.upload_file }}</button>
+            <button class="button secondary" type="submit" name="action" value="sample">{{ t.run_sample }}</button>
+        </div>
+    </form>
+</section>
+
+{% include "partials/messages.html" %}
+
+{% if stats %}
+    {% include "partials/stats.html" %}
+{% endif %}
+
+{% if downloads %}
+    {% include "partials/downloads.html" %}
+{% endif %}
+
+{% if raw_table %}
+<section class="panel">
+    <h2>{{ t.raw_data }}</h2>
+    <div class="table-wrap">{{ raw_table | safe }}</div>
+</section>
+{% endif %}
+
+{% if clean_table %}
+<section class="panel">
+    <h2>{{ t.clean_data }}</h2>
+    <div class="table-wrap">{{ clean_table | safe }}</div>
+</section>
+{% endif %}
+
+{% if invalid_table %}
+<section class="panel">
+    <h2>{{ t.invalid_data }}</h2>
+    <div class="table-wrap">{{ invalid_table | safe }}</div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ t.product }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark">AC</div>
+            <div>
+                <div class="brand-title">{{ t.product }}</div>
+                <div class="brand-subtitle">{{ t.subtitle }}</div>
+            </div>
+        </div>
+
+        <nav class="nav">
+            <a class="nav-link {% if active == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">{{ t.dashboard }}</a>
+            <a class="nav-link {% if active == 'csv' %}active{% endif %}" href="{{ url_for('csv_cleaner') }}">{{ t.csv }}</a>
+            <a class="nav-link {% if active == 'api' %}active{% endif %}" href="{{ url_for('api_sync') }}">{{ t.api }}</a>
+            <a class="nav-link {% if active == 'scraper' %}active{% endif %}" href="{{ url_for('scraper') }}">{{ t.scraper }}</a>
+            <a class="nav-link {% if active == 'history' %}active{% endif %}" href="{{ url_for('history') }}">{{ t.history }}</a>
+            <a class="nav-link {% if active == 'help' %}active{% endif %}" href="{{ url_for('help_page') }}">{{ t.help }}</a>
+        </nav>
+
+        <div class="language-box">
+            <div class="label">{{ t.language }}</div>
+            <div class="language-actions">
+                <a class="language-link {% if lang == 'ru' %}active{% endif %}" href="{{ request.path }}?lang=ru">RU</a>
+                <a class="language-link {% if lang == 'en' %}active{% endif %}" href="{{ request.path }}?lang=en">EN</a>
+            </div>
+        </div>
+    </aside>
+
+    <main class="content">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+</body>
+</html>
