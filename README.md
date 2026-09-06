@@ -1,3 +1,5 @@
+**English** | [Русский](README_RU.md)
+
 # Automation Control Center Web
 
 A Python Flask web dashboard for running common business automation tasks from one clean interface.
