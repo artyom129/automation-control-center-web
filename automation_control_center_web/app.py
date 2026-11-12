@@ -1,28 +1,36 @@
 from __future__ import annotations
 
+import os
+import secrets
 from pathlib import Path
 
 import pandas as pd
 from flask import Flask, redirect, render_template, request, send_file, session, url_for
+from werkzeug.exceptions import HTTPException
 from werkzeug.utils import secure_filename
 
 from modules.api_sync import fetch_api_records, normalize_api_records
 from modules.csv_cleaner import clean_dataframe
-from modules.database import create_tables, get_recent_runs, save_clean_records, save_run_log
+from modules.database import (
+    create_tables,
+    get_recent_runs,
+    get_run_summary,
+    save_clean_records,
+    save_run_log,
+)
 from modules.excel_report import create_excel_report
 from modules.web_scraper import scrape_demo_products
 
 
 BASE_DIR = Path(__file__).resolve().parent
 OUTPUT_DIR = BASE_DIR / "output"
-UPLOAD_DIR = BASE_DIR / "uploads"
 SAMPLE_DATA_DIR = BASE_DIR / "sample_data"
-
-OUTPUT_DIR.mkdir(exist_ok=True)
-UPLOAD_DIR.mkdir(exist_ok=True)
+MAX_UPLOAD_MB = 5
 
 app = Flask(__name__)
-app.secret_key = "automation-center-dev-key"
+# Set SECRET_KEY in the environment for a stable session across restarts.
+app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(16)
+app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
 
 
 TEXT = {
@@ -80,6 +88,15 @@ TEXT = {
         "details": "Детали",
         "created": "Дата",
         "task": "Задача",
+        "total_runs": "Всего запусков",
+        "successful_runs": "Успешных",
+        "failed_runs": "С ошибкой",
+        "records_processed": "Обработано записей",
+        "err_no_file": "Файл CSV не выбран.",
+        "err_not_csv": "Нужен файл с расширением .csv.",
+        "err_empty_csv": "В файле нет данных.",
+        "err_bad_csv": "Не удалось прочитать файл как CSV в кодировке UTF-8.",
+        "err_too_large": "Файл слишком большой (максимум {mb} МБ).",
     },
     "en": {
         "product": "Automation Center",
@@ -135,6 +152,15 @@ TEXT = {
         "details": "Details",
         "created": "Created",
         "task": "Task",
+        "total_runs": "Total runs",
+        "successful_runs": "Successful",
+        "failed_runs": "Failed",
+        "records_processed": "Records processed",
+        "err_no_file": "No CSV file was selected.",
+        "err_not_csv": "The file must have a .csv extension.",
+        "err_empty_csv": "The file contains no data.",
+        "err_bad_csv": "The file could not be read as a UTF-8 CSV.",
+        "err_too_large": "The file is too large (limit {mb} MB).",
     },
 }
 
@@ -155,10 +181,42 @@ def inject_globals():
     }
 
 
+class UserInputError(Exception):
+    """A problem with the user's input, shown as-is instead of a traceback."""
+
+
+def read_uploaded_csv(uploaded, t: dict) -> tuple[pd.DataFrame, str]:
+    if uploaded is None or uploaded.filename == "":
+        raise UserInputError(t["err_no_file"])
+
+    filename = secure_filename(uploaded.filename)
+    if not filename.lower().endswith(".csv"):
+        raise UserInputError(t["err_not_csv"])
+
+    try:
+        # Read straight from the request stream, nothing is written to disk.
+        return pd.read_csv(uploaded.stream), filename
+    except pd.errors.EmptyDataError:
+        raise UserInputError(t["err_empty_csv"]) from None
+    except (UnicodeDecodeError, pd.errors.ParserError):
+        raise UserInputError(t["err_bad_csv"]) from None
+
+
+@app.errorhandler(413)
+def file_too_large(_error):
+    t = TEXT[get_lang()]
+    return render_template(
+        "csv.html", active="csv", raw_table=None, clean_table=None,
+        invalid_table=None, stats=None, downloads=None, message=None,
+        error=t["err_too_large"].format(mb=MAX_UPLOAD_MB),
+    ), 413
+
+
 @app.route("/")
 def dashboard():
     runs = get_recent_runs(limit=5)
-    return render_template("dashboard.html", active="dashboard", runs=runs)
+    return render_template("dashboard.html", active="dashboard", runs=runs,
+                           summary=get_run_summary())
 
 
 @app.route("/csv", methods=["GET", "POST"])
@@ -181,16 +239,10 @@ def csv_cleaner():
             if request.form.get("action") == "sample":
                 df = pd.read_csv(SAMPLE_DATA_DIR / "sample_customers.csv")
             else:
-                uploaded = request.files.get("csv_file")
-                if uploaded is None or uploaded.filename == "":
-                    raise ValueError("CSV file was not selected.")
+                df, source_name = read_uploaded_csv(
+                    request.files.get("csv_file"), TEXT[get_lang()])
 
-                filename = secure_filename(uploaded.filename)
-                file_path = UPLOAD_DIR / filename
-                uploaded.save(file_path)
-                source_name = filename
-                df = pd.read_csv(file_path)
-
+            OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
             clean_df, invalid_df, stats = clean_dataframe(df)
 
             csv_path = OUTPUT_DIR / "cleaned_data.csv"
@@ -224,6 +276,10 @@ def csv_cleaner():
                 "message": "done",
             })
 
+        except HTTPException:
+            raise  # for example 413 for a too-large upload, handled above
+        except UserInputError as exc:
+            context["error"] = str(exc)
         except Exception as exc:
             save_run_log("CSV Cleaner", "Failed", 0, str(exc))
             context["error"] = str(exc)
@@ -246,7 +302,12 @@ def api_sync():
         try:
             records = fetch_api_records()
             clean_df, invalid_df = normalize_api_records(records)
+            duplicates = (
+                int(invalid_df["error"].str.contains("Duplicate").sum())
+                if "error" in invalid_df.columns else 0
+            )
 
+            OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
             csv_path = OUTPUT_DIR / "api_sync_records.csv"
             excel_path = OUTPUT_DIR / "api_sync_report.xlsx"
 
@@ -266,8 +327,8 @@ def api_sync():
                 "stats": {
                     "total": len(records),
                     "ready": len(clean_df),
-                    "duplicates": max(len(records) - len(clean_df) - len(invalid_df), 0),
-                    "errors": len(invalid_df),
+                    "duplicates": duplicates,
+                    "errors": len(invalid_df) - duplicates,
                 },
                 "downloads": {
                     "csv": "api_sync_records.csv",
@@ -301,6 +362,7 @@ def scraper():
             pages = max(1, min(5, pages))
             df = scrape_demo_products(max_pages=pages)
 
+            OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
             csv_path = OUTPUT_DIR / "scraped_products.csv"
             excel_path = OUTPUT_DIR / "scraped_products_report.xlsx"
 
@@ -357,4 +419,6 @@ def download_file(filename: str):
 
 if __name__ == "__main__":
     create_tables()
-    app.run(debug=True)
+    # Debug mode exposes an interactive console, so it is opt-in:
+    #   set FLASK_DEBUG=1 (Windows) or export FLASK_DEBUG=1 (macOS / Linux)
+    app.run(debug=os.environ.get("FLASK_DEBUG") == "1")

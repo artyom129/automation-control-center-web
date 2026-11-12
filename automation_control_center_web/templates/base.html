@@ -4,13 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ t.product }}</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563eb'/%3E%3Ctext x='16' y='22' font-size='15' font-family='Arial' font-weight='700' text-anchor='middle' fill='white'%3EAC%3C/text%3E%3C/svg%3E">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 <div class="layout">
     <aside class="sidebar">
         <div class="brand">
-            <div class="brand-mark">AC</div>
+            <div class="brand-mark" aria-hidden="true"></div>
             <div>
                 <div class="brand-title">{{ t.product }}</div>
                 <div class="brand-subtitle">{{ t.subtitle }}</div>
@@ -39,5 +40,19 @@
         {% block content %}{% endblock %}
     </main>
 </div>
+<script>
+    // Show a busy state while a long job (for example the scraper) runs.
+    document.querySelectorAll("form").forEach(function (form) {
+        form.addEventListener("submit", function (event) {
+            var button = event.submitter;
+            if (button) {
+                button.classList.add("busy");
+                setTimeout(function () {
+                    form.querySelectorAll("button").forEach(function (b) { b.disabled = true; });
+                }, 0);
+            }
+        });
+    });
+</script>
 </body>
 </html>

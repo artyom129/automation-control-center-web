@@ -1,0 +1,5 @@
+{% if error %}
+<div class="alert error" role="alert">{{ t.failed }}: {{ error }}</div>
+{% elif message == "done" %}
+<div class="alert success" role="status">{{ t.done }}</div>
+{% endif %}

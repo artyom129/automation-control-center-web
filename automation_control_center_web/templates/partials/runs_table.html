@@ -1,0 +1,34 @@
+{% if runs %}
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>{{ t.created }}</th>
+                <th>{{ t.task }}</th>
+                <th>{{ t.status }}</th>
+                <th>{{ t.records }}</th>
+                <th>{{ t.details }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for run in runs %}
+            <tr>
+                <td>{{ run.created_at }}</td>
+                <td>{{ run.task_name }}</td>
+                <td>
+                    {% if run.status == "Success" %}
+                        <span class="status status-success">{{ t.done }}</span>
+                    {% else %}
+                        <span class="status status-failed">{{ t.failed }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ run.records_processed }}</td>
+                <td>{{ run.details }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">{{ t.no_data }}</div>
+{% endif %}

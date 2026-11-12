@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <h1>{{ t.overview_title }}</h1>
+        <p>{{ t.overview_text }}</p>
+    </div>
+</section>
+
+{% if summary %}
+<section class="stats-grid">
+    <div class="stat-card"><span>{{ t.total_runs }}</span><strong>{{ summary.total_runs }}</strong></div>
+    <div class="stat-card"><span>{{ t.successful_runs }}</span><strong>{{ summary.successful }}</strong></div>
+    <div class="stat-card"><span>{{ t.failed_runs }}</span><strong>{{ summary.failed }}</strong></div>
+    <div class="stat-card"><span>{{ t.records_processed }}</span><strong>{{ summary.records }}</strong></div>
+</section>
+{% endif %}
+
+<section class="cards-grid">
+    <article class="tool-card">
+        <div class="tool-topline">CSV</div>
+        <h2>{{ t.csv_title }}</h2>
+        <p>{{ t.csv_text }}</p>
+        <a class="button" href="{{ url_for('csv_cleaner') }}">{{ t.open }}</a>
+    </article>
+
+    <article class="tool-card">
+        <div class="tool-topline">API</div>
+        <h2>{{ t.api_title }}</h2>
+        <p>{{ t.api_text }}</p>
+        <a class="button" href="{{ url_for('api_sync') }}">{{ t.open }}</a>
+    </article>
+
+    <article class="tool-card">
+        <div class="tool-topline">WEB</div>
+        <h2>{{ t.scraper_title }}</h2>
+        <p>{{ t.scraper_text }}</p>
+        <a class="button" href="{{ url_for('scraper') }}">{{ t.open }}</a>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <h2>{{ t.recent_runs }}</h2>
+        <a href="{{ url_for('history') }}">{{ t.history }}</a>
+    </div>
+    {% include "partials/runs_table.html" %}
+</section>
+{% endblock %}

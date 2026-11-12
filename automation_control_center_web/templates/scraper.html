@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <h1>{{ t.scraper_title }}</h1>
+        <p>{{ t.scraper_text }}</p>
+    </div>
+</section>
+
+<section class="panel">
+    <form method="post" class="form-grid">
+        <div class="field small">
+            <label for="pages">{{ t.pages }}</label>
+            <input id="pages" type="number" name="pages" min="1" max="5" value="{{ pages }}">
+        </div>
+        <div class="form-actions">
+            <button class="button" type="submit">{{ t.run_scraper }}</button>
+        </div>
+    </form>
+</section>
+
+{% include "partials/messages.html" %}
+
+{% if stats %}
+    {% include "partials/stats.html" %}
+{% endif %}
+
+{% if downloads %}
+    {% include "partials/downloads.html" %}
+{% endif %}
+
+{% if table %}
+<section class="panel">
+    <h2>{{ t.results }}</h2>
+    <div class="table-wrap">{{ table | safe }}</div>
+</section>
+{% endif %}
+{% endblock %}

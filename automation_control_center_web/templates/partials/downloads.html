@@ -1,0 +1,4 @@
+<div class="download-row">
+    <a class="button" href="{{ url_for('download_file', filename=downloads.csv) }}">{{ t.download_csv }}</a>
+    <a class="button secondary" href="{{ url_for('download_file', filename=downloads.excel) }}">{{ t.download_excel }}</a>
+</div>
