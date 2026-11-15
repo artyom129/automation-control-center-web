@@ -102,23 +102,6 @@ python -m pytest -q
 
 42 tests run without a network. They cover every page, the language switch, upload validation (wrong extension, empty file, wrong encoding, oversized file), the cleaning rules, API normalization, scraper pagination and loop protection, the SQLite history, the Excel workbook contents, and file downloads, including an attempt to read a file outside the output folder. CI runs them on Python 3.11 and 3.12.
 
-<details>
-<summary>🐛 Problems found and fixed in this version</summary>
-
-<br>
-
-- **The app crashed on most pages.** The repository was missing seven templates (`dashboard`, `scraper`, `history`, `help`, and three partials), so `/`, `/scraper`, `/history` and `/help` raised `TemplateNotFound`. They are written now, and a test opens every page.
-- **The sample data did not show a duplicate.** Row 4 of the sample repeats row 1 under a new `id`, but duplicates were compared across all columns including `id`. The `id` column is now ignored, and the sample reports exactly one duplicate.
-- **The word "None" in the data.** A missing API field became the text `None`. Missing values are now empty.
-- **Database path depended on where you started the app.** It was relative to the working directory. It now lives next to the code.
-- **Records were stored as a Python repr.** The text looked like JSON but was not parseable. Records are now stored as real JSON.
-- **Connections were never closed**, which keeps the SQLite file locked on Windows.
-- **Debug mode was always on, and the secret key was written into the code.** Debug is now opt-in and the key comes from the environment.
-- **Uploads were saved to disk under the visitor's file name.** The file is now read straight from the request and nothing is written.
-- **`Â£` instead of `£` in scraped prices**, caused by a wrong charset guess. Fixed by reading the charset from the page.
-
-</details>
-
 ## 📂 Project layout
 
 ```text
